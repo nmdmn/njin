@@ -1,0 +1,7 @@
+Debug/
+build/
+nvimgdb.log
+compile_commands.json
+.cache/
+CMakeCache.txt
+CMakeFiles/
