@@ -1,10 +1,10 @@
 #pragma once
 
-#include <string_view>
 #include <memory>
+#include <string_view>
 
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glad/glad.h>
 #include <glm/glm.hpp>
 
 #include "config.h"
@@ -12,9 +12,7 @@
 namespace njin {
 class renderer {
 public:
-	renderer(std::string_view window_title = "njin",
-			 const int window_width = 800,
-			 const int window_height = 600);
+	renderer(std::string_view window_title = "njin", const int window_width = 800, const int window_height = 600);
 	auto is_running() -> bool;
 	auto handle_events() -> void;
 	auto swap() -> void;
@@ -26,8 +24,7 @@ public:
 
 	static auto on_frame_buffer_size_changed(GLFWwindow *window, int width, int height) -> void;
 
-	template <typename T>
-	friend auto operator<<(T &stream, const renderer &renderer) -> T & {
+	template <typename T> friend auto operator<<(T &stream, const renderer &renderer) -> T & {
 		return stream << renderer.to_string() << std::endl;
 	}
 

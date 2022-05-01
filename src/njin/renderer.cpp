@@ -8,11 +8,13 @@ using namespace std;
 
 namespace njin {
 renderer::renderer(string_view window_title, const int window_width, const int window_height)
-	: window_title_{window_title}
-	, window_width_{window_width}
-	, window_height_{window_height}
-	, glfw_window_{nullptr, glfwDestroyWindow} {
-	if(!glfwInit()) { throw runtime_error("glfwInit() failed!"); }
+		: window_title_{window_title}
+		, window_width_{window_width}
+		, window_height_{window_height}
+		, glfw_window_{nullptr, glfwDestroyWindow} {
+	if (!glfwInit()) {
+		throw runtime_error("glfwInit() failed!");
+	}
 	set_window_hints(3, 3);
 	get_monitor_attribs();
 	create_window();
@@ -20,19 +22,15 @@ renderer::renderer(string_view window_title, const int window_width, const int w
 	load_glad();
 }
 
-auto renderer::is_running() -> bool {
-	return !glfwWindowShouldClose(glfw_window_.get());
-}
+auto renderer::is_running() -> bool { return !glfwWindowShouldClose(glfw_window_.get()); }
 
 auto renderer::handle_events() -> void {
 	glfwPollEvents();
-	if(glfwGetKey(glfw_window_.get(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	if (glfwGetKey(glfw_window_.get(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(glfw_window_.get(), true);
 }
 
-auto renderer::swap() -> void {
-	glfwSwapBuffers(glfw_window_.get());
-}
+auto renderer::swap() -> void { glfwSwapBuffers(glfw_window_.get()); }
 
 auto renderer::clear() -> void {
 #ifdef DEBUG42 // XXX this is sad :(
@@ -50,9 +48,7 @@ auto renderer::set_clear_color(const glm::vec4 &clear_color) -> void {
 	glClearColor(clear_color_.r, clear_color_.g, clear_color_.b, clear_color_.a);
 }
 
-auto renderer::set_polygon_mode(const GLenum face, const GLenum mode) -> void {
-	glPolygonMode(face, mode);
-}
+auto renderer::set_polygon_mode(const GLenum face, const GLenum mode) -> void { glPolygonMode(face, mode); }
 
 auto renderer::set_window_hints(const int version_major, const int version_minor) -> void {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, version_major);
@@ -79,12 +75,9 @@ auto renderer::get_monitor_attribs() -> void {
 }
 
 auto renderer::create_window() -> void {
-	glfw_window_.reset(glfwCreateWindow(window_width_,
-										window_height_,
-										(window_title_ + " v" + NJIN_VERSION).c_str(),
-										nullptr,
-										nullptr));
-	if(!glfw_window_) {
+	glfw_window_.reset(
+			glfwCreateWindow(window_width_, window_height_, (window_title_ + " v" + NJIN_VERSION).c_str(), nullptr, nullptr));
+	if (!glfw_window_) {
 		glfwTerminate();
 		throw runtime_error("glfwCreateWindow() failed!");
 	}
@@ -96,15 +89,15 @@ auto renderer::set_callbacks() -> void {
 }
 
 auto renderer::load_glad() -> void {
-	if(!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
+	if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
 		throw runtime_error("gladLoadGLLoader() failed");
 }
 
 auto renderer::to_string() const -> string {
 	stringstream msg_stream;
 	msg_stream << "window: width=" << window_width_ << ", height=" << window_height_ << "; "
-			   << "monitor: width=" << monitor_width_ << ", height=" << monitor_height_
-			   << ", refresh rate=" << monitor_refresh_rate_;
+						 << "monitor: width=" << monitor_width_ << ", height=" << monitor_height_
+						 << ", refresh rate=" << monitor_refresh_rate_;
 	return msg_stream.str();
 }
 } // namespace njin

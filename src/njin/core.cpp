@@ -17,10 +17,10 @@ core::core() {
 
 	constexpr std::string_view njin_shader_folder = NJIN_SHADER_FOLDER;
 	program program{njin_shader_folder.data() + std::string("default.vs"),
-					njin_shader_folder.data() + std::string("default.fs")};
+									njin_shader_folder.data() + std::string("default.fs")};
 	std::cout << program;
 
-	while(renderer.is_running()) {
+	while (renderer.is_running()) {
 		renderer.clear();
 		renderer.handle_events();
 		// TODO

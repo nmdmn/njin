@@ -2,6 +2,4 @@
 
 #include <core.h>
 
-auto main() -> int {
-	njin::core core;
-}
+auto main() -> int { njin::core core; }
