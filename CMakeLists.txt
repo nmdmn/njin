@@ -5,8 +5,6 @@ project(
   LANGUAGES CXX)
 
 include(cmake/njin-setup.cmake)
-#set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_BUILD_TYPE Debug)
 setup_build_type()
 prevent_in_src_builds()
 
