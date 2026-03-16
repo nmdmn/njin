@@ -42,8 +42,8 @@ FetchContent_Declare(vma
 FetchContent_MakeAvailable(glfw glm vma)
 
 # ── Executable ────────────────────────────────────────────────────────────────
-file(GLOB HEADERS src/*.hpp)
-file(GLOB SOURCES src/*.cpp)
+file(GLOB HEADERS src/*.hh)
+file(GLOB SOURCES src/*.cc)
 
 set(NJIN_NAME ${PROJECT_NAME})
 set(NJIN_VERSION ${PROJECT_VERSION})
@@ -55,7 +55,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
 else()
   set(NJIN_SHADER_FOLDER ${CMAKE_SOURCE_DIR}/shaders)
 endif()
-configure_file(src/config.h.in src/config.h)
+configure_file(src/config.hh.in src/config.hh)
 
 add_executable(${NJIN_NAME}
   ${HEADERS}
