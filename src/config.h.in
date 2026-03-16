@@ -1,0 +1,11 @@
+#pragma once
+
+// clang-format off
+#cmakedefine NJIN_NAME "@NJIN_NAME@"
+#cmakedefine NJIN_VERSION "@NJIN_VERSION@"
+#define NJIN_VERSION_MAJOR @NJIN_VERSION_MAJOR@
+#define NJIN_VERSION_MINOR @NJIN_VERSION_MINOR@
+#define NJIN_VERSION_PATCH @NJIN_VERSION_PATCH@
+
+#cmakedefine NJIN_SHADER_FOLDER "@NJIN_SHADER_FOLDER@/"
+// clang-format on
