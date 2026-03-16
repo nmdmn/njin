@@ -6,7 +6,7 @@ setup_build_type()
 prevent_in_src_builds()
 no_system_includes()
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ── Dependencies ─────────────────────────────────────────────────
