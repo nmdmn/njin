@@ -1,4 +1,5 @@
-#include <iostream>
+#include <ranges>
+#include <algorithm>
 #include <exception>
 #include <vulkan/vulkan_core.h>
 
@@ -59,13 +60,20 @@ private:
     VkInstanceCreateInfo create_info{};
     create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     create_info.pApplicationInfo = &app_info;
+    create_info.enabledLayerCount = 0;
 
     uint32_t glfw_extension_count = 0;
     const char **glfw_extensions;
     glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
-    create_info.enabledExtensionCount = glfw_extension_count;
-    create_info.ppEnabledExtensionNames = glfw_extensions;
-    create_info.enabledLayerCount = 0;
+
+    std::vector<const char *> requires_extensions;
+    auto ids = std::views::iota(static_cast<uint32_t>(0), glfw_extension_count);
+    std::ranges::transform(ids, std::back_inserter(requires_extensions), [&](int i) { return glfw_extensions[i]; });
+
+    requires_extensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+    create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+    create_info.enabledExtensionCount = static_cast<uint32_t>(requires_extensions.size());
+    create_info.ppEnabledExtensionNames = requires_extensions.data();
 
     if (vkCreateInstance(&create_info, nullptr, &instance_) != VK_SUCCESS) {
       throw std::runtime_error(" Vulkan instance creation failed!");
