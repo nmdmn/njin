@@ -83,6 +83,12 @@ find /opt/homebrew -name "libVkLayer_khronos_validation.dylib" 2>/dev/null
 mkdir build && cd build && cmake .. && make
 ```
 
+Run tests!
+
+```sh
+ctest --output-on-failure
+```
+
 #### Sym. link the compile-commands
 
 ```sh

@@ -9,7 +9,22 @@ no_system_includes()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# ── Dependencies ─────────────────────────────────────────────────
+# ── Config Generation ─────────────────────────────────────────────────────────
+set(NJIN_NAME ${PROJECT_NAME})
+set(NJIN_VERSION ${PROJECT_VERSION})
+set(NJIN_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(NJIN_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(NJIN_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  set(NJIN_LOGGER 0)
+  set(NJIN_SHADER_FOLDER shaders)
+else()
+  set(NJIN_LOGGER 1)
+  set(NJIN_SHADER_FOLDER ${CMAKE_SOURCE_DIR}/shaders)
+endif()
+configure_file(src/config.hh.in src/config.hh)
+
+# ── Dependencies ──────────────────────────────────────────────────────────────
 find_package(Vulkan REQUIRED)
 
 include(FetchContent)
@@ -41,23 +56,47 @@ FetchContent_Declare(vma
 
 FetchContent_MakeAvailable(glfw glm vma)
 
+# Catch2 — testing framework
+FetchContent_Declare(catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        v3.7.1
+  GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(catch2)
+
+# ── Tests ─────────────────────────────────────────────────────────────────────
+enable_testing()
+
+file(GLOB TEST_SOURCES tests/*.cc)
+add_executable(njin_tests ${TEST_SOURCES} ${HEADERS})
+
+target_include_directories(njin_tests PRIVATE
+  src/
+  ${vma_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_BINARY_DIR}/src
+)
+
+target_link_libraries(njin_tests PRIVATE
+  Catch2::Catch2WithMain
+  Vulkan::Vulkan
+  glfw
+  glm
+)
+
+target_compile_definitions(njin_tests PRIVATE
+  GLM_FORCE_DEPTH_ZERO_TO_ONE
+  GLM_FORCE_RADIANS
+  GLM_FORCE_LEFT_HANDED
+  NJIN_LOGGER=${NJIN_LOGGER}
+)
+
+include(CTest)
+include(Catch)
+catch_discover_tests(njin_tests)
+
 # ── Executable ────────────────────────────────────────────────────────────────
 file(GLOB HEADERS src/*.hh)
 file(GLOB SOURCES src/*.cc)
-
-set(NJIN_NAME ${PROJECT_NAME})
-set(NJIN_VERSION ${PROJECT_VERSION})
-set(NJIN_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
-set(NJIN_VERSION_MINOR ${PROJECT_VERSION_MINOR})
-set(NJIN_VERSION_PATCH ${PROJECT_VERSION_PATCH})
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-  set(NJIN_LOGGER 0)
-  set(NJIN_SHADER_FOLDER shaders)
-else()
-  set(NJIN_LOGGER 1)
-  set(NJIN_SHADER_FOLDER ${CMAKE_SOURCE_DIR}/shaders)
-endif()
-configure_file(src/config.hh.in src/config.hh)
 
 add_executable(${NJIN_NAME}
   ${HEADERS}

@@ -52,22 +52,6 @@ private:
 };
 } // namespace njin
 
-void test_logger() {
-  auto &logger = njin::Logger::instance();
-  auto worker = [&](int id) {
-    for (int i = 0; i < 5; ++i)
-      logger.trace << "thread " << std::to_string(id) << " msg " << std::to_string(i);
-  };
-
-  std::thread t1(worker, 1);
-  std::thread t2(worker, 2);
-  std::thread t3(worker, 3);
-
-  t1.join();
-  t2.join();
-  t3.join();
-}
-
 int main() {
   njin::App app;
 
