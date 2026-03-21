@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/generators/catch_generators_range.hpp>
+#include <vector>
 #include <thread>
 #include <atomic>
 #include <future>
@@ -19,23 +20,24 @@ TEST_CASE("Logger accepts messages from multiple threads", "[logger]") {
   auto &logger = njin::Logger::instance();
   std::atomic<int> count = 0;
 
+  constexpr int NUM_ITERATIONS = 10;
+  constexpr int NUM_THREADS = 5;
   auto test = std::async(std::launch::async, [&] {
     auto worker = [&](int id) {
-      for (int i = 0; i < 10; ++i) {
+      for (int i = 0; i < NUM_ITERATIONS; ++i) {
         logger.info << "thread " << id << " msg " << i;
         ++count;
       }
     };
 
-    std::thread t1(worker, 1);
-    std::thread t2(worker, 2);
-    std::thread t3(worker, 3);
+    std::vector<std::thread> threads;
+    for (int i = 0; i < NUM_THREADS; i++) {
+      threads.emplace_back(worker, i);
+    }
 
-    t1.join();
-    t2.join();
-    t3.join();
+    std::ranges::for_each(threads, &std::thread::join);
   });
 
   REQUIRE(test.wait_for(std::chrono::seconds(5)) == std::future_status::ready);
-  REQUIRE(count == 30);
+  REQUIRE(count == NUM_ITERATIONS * NUM_THREADS);
 }
