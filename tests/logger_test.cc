@@ -3,6 +3,7 @@
 #include <catch2/generators/catch_generators_range.hpp>
 #include <thread>
 #include <atomic>
+#include <future>
 #include "logger.hh"
 
 TEST_CASE("Logger is a singleton", "[logger]") {
@@ -18,20 +19,23 @@ TEST_CASE("Logger accepts messages from multiple threads", "[logger]") {
   auto &logger = njin::Logger::instance();
   std::atomic<int> count = 0;
 
-  auto worker = [&](int id) {
-    for (int i = 0; i < 10; ++i) {
-      logger.info << "thread " << id << " msg " << i;
-      ++count;
-    }
-  };
+  auto test = std::async(std::launch::async, [&] {
+    auto worker = [&](int id) {
+      for (int i = 0; i < 10; ++i) {
+        logger.info << "thread " << id << " msg " << i;
+        ++count;
+      }
+    };
 
-  std::thread t1(worker, 1);
-  std::thread t2(worker, 2);
-  std::thread t3(worker, 3);
+    std::thread t1(worker, 1);
+    std::thread t2(worker, 2);
+    std::thread t3(worker, 3);
 
-  t1.join();
-  t2.join();
-  t3.join();
+    t1.join();
+    t2.join();
+    t3.join();
+  });
 
+  REQUIRE(test.wait_for(std::chrono::seconds(5)) == std::future_status::ready);
   REQUIRE(count == 30);
 }

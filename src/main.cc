@@ -1,6 +1,4 @@
 #include <iostream>
-#include <thread>
-#include <string>
 #include <exception>
 
 #define GLFW_INCLUDE_VULKAN
