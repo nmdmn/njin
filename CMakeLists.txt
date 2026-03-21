@@ -151,14 +151,14 @@ foreach(SHADER ${SHADERS})
 endforeach()
 
 add_custom_target(shaders ALL DEPENDS ${SPV_FILES})
-add_dependencies(njin shaders)
+add_dependencies(njin shaders njin_tests)
 
 # Copy SPIR-V files next to binary after build
 add_custom_command(TARGET njin POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${SPV_DIR} $<TARGET_FILE_DIR:njin>/shaders
 )
 
-add_custom_command(TARGET njin_tests POST_BUILD
+add_custom_command(TARGET njin POST_BUILD
     COMMAND ctest --output-on-failure --test-dir ${CMAKE_BINARY_DIR}
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
