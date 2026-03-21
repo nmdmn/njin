@@ -14,13 +14,13 @@ TEST_CASE("Logger is a singleton", "[logger]") {
 }
 
 TEST_CASE("Logger accepts messages from multiple threads", "[logger]") {
-  auto run = GENERATE(range(1, 10001));
+  auto run = GENERATE(range(1, 1001));
   (void)run;
 
   auto &logger = njin::Logger::instance();
   std::atomic<int> count = 0;
 
-  constexpr int NUM_ITERATIONS = 10;
+  constexpr int NUM_ITERATIONS = 100;
   constexpr int NUM_THREADS = 5;
   auto test = std::async(std::launch::async, [&] {
     auto worker = [&](int id) {
@@ -38,6 +38,6 @@ TEST_CASE("Logger accepts messages from multiple threads", "[logger]") {
     std::ranges::for_each(threads, &std::thread::join);
   });
 
-  REQUIRE(test.wait_for(std::chrono::seconds(5)) == std::future_status::ready);
+  REQUIRE(test.wait_for(std::chrono::seconds(3)) == std::future_status::ready);
   REQUIRE(count == NUM_ITERATIONS * NUM_THREADS);
 }
