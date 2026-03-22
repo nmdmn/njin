@@ -1,3 +1,4 @@
+#include <vector>
 #include <ranges>
 #include <algorithm>
 #include <exception>
@@ -10,12 +11,14 @@
 #include "logger.hh"
 
 // TODO Proper RAII! c-tor/d-tor usage - implement via unique_ptr/shared_ptr with custom deleter!
+// NOTE on the official Khronos Vulkan tutorial there is something about vk::raii::... CHECK IT!
+
+static auto &logger = njin::Logger::instance();
 
 namespace njin {
 class App {
 public:
   void run() {
-    auto &logger = Logger::instance();
     logger.info << NJIN_NAME << " v" << NJIN_VERSION;
 
     initWindow();
@@ -44,6 +47,7 @@ private:
   }
 
   void cleanup() {
+    vkDestroyInstance(instance_, nullptr);
     glfwDestroyWindow(window_);
     glfwTerminate();
   }
@@ -65,15 +69,36 @@ private:
     uint32_t glfw_extension_count = 0;
     const char **glfw_extensions;
     glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
-
-    std::vector<const char *> requires_extensions;
+    std::vector<const char *> glfw_required_extensions;
     auto ids = std::views::iota(static_cast<uint32_t>(0), glfw_extension_count);
-    std::ranges::transform(ids, std::back_inserter(requires_extensions), [&](int i) { return glfw_extensions[i]; });
+    std::ranges::transform(ids, std::back_inserter(glfw_required_extensions),
+                           [&](int i) { return glfw_extensions[i]; });
+    glfw_required_extensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 
-    requires_extensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
     create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-    create_info.enabledExtensionCount = static_cast<uint32_t>(requires_extensions.size());
-    create_info.ppEnabledExtensionNames = requires_extensions.data();
+    create_info.enabledExtensionCount = static_cast<uint32_t>(glfw_required_extensions.size());
+    create_info.ppEnabledExtensionNames = glfw_required_extensions.data();
+
+    uint32_t vk_extension_count = 0;
+    vkEnumerateInstanceExtensionProperties(nullptr, &vk_extension_count, nullptr);
+    std::vector<VkExtensionProperties> vk_extensions{vk_extension_count};
+    vkEnumerateInstanceExtensionProperties(nullptr, &vk_extension_count, vk_extensions.data());
+    logger.info << "available extensions:";
+    std::ranges::for_each(vk_extensions, [&](const auto &element) { logger.info << "\t" << element.extensionName; });
+
+    bool all_found = true;
+    std::ranges::for_each(glfw_required_extensions, [&](const auto &glfw_extension) {
+      bool found = std::ranges::any_of(
+          vk_extensions, [&](const auto &vk_extension) { return glfw_extension == vk_extension.extensionName; });
+      if (!found) {
+        all_found = false;
+        logger.warning << "missing extension: " << glfw_extension;
+      }
+    });
+
+    if (all_found) {
+      logger.info << "all extensions found";
+    }
 
     if (vkCreateInstance(&create_info, nullptr, &instance_) != VK_SUCCESS) {
       throw std::runtime_error(" Vulkan instance creation failed!");
@@ -94,7 +119,7 @@ int main() {
   try {
     app.run();
   } catch (const std::exception &e) {
-    njin::Logger::instance().error << e.what();
+    logger.error << e.what();
     return EXIT_FAILURE;
   }
 
