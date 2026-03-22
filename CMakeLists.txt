@@ -7,6 +7,12 @@ prevent_in_src_builds()
 no_system_includes()
 
 set(CMAKE_CXX_STANDARD 20)
+#set(CMAKE_CXX_CLANG_TIDY
+#    clang-tidy
+#    -checks=modernize-*,performance-*,bugprone-*,readability-*
+#    -header-filter=${CMAKE_SOURCE_DIR}/src/.*
+#    --extra-arg=-isystem${CMAKE_SOURCE_DIR}/build/_deps
+#)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ── Config Generation ─────────────────────────────────────────────────────────
