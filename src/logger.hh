@@ -54,7 +54,7 @@ public:
 
     Level level_;
     Logger &logger_;
-    bool moved_;
+    bool moved_ = false;
     std::ostringstream string_stream_;
   };
 
