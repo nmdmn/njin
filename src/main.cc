@@ -70,9 +70,8 @@ private:
     const char **glfw_extensions;
     glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
     std::vector<const char *> glfw_required_extensions;
-    auto ids = std::views::iota(static_cast<uint32_t>(0), glfw_extension_count);
-    std::ranges::transform(ids, std::back_inserter(glfw_required_extensions),
-                           [&](int i) { return glfw_extensions[i]; });
+    std::ranges::transform(std::views::iota(static_cast<uint32_t>(0), glfw_extension_count),
+                           std::back_inserter(glfw_required_extensions), [&](int i) { return glfw_extensions[i]; });
     glfw_required_extensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 
     create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
@@ -88,6 +87,8 @@ private:
 
     bool all_found = true;
     std::ranges::for_each(glfw_required_extensions, [&](const auto &glfw_extension) {
+      // XXX something funny... extensions not found when its should be there?! DEBUG IT LATER!
+      logger.trace << glfw_extension;
       bool found = std::ranges::any_of(
           vk_extensions, [&](const auto &vk_extension) { return glfw_extension == vk_extension.extensionName; });
       if (!found) {
