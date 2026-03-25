@@ -25,6 +25,10 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
   set(NJIN_LOGGER 0)
   set(NJIN_SHADER_FOLDER shaders)
 else()
+  # 1 TRACE
+  # 2 INFO
+  # 3 WARNING
+  # 4 ERROR
   set(NJIN_LOGGER 1)
   set(NJIN_SHADER_FOLDER ${CMAKE_SOURCE_DIR}/shaders)
 endif()

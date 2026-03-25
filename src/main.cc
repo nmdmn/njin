@@ -101,7 +101,7 @@ private:
     }
 
     if (vkCreateInstance(&create_info, nullptr, &instance_) != VK_SUCCESS) {
-      throw std::runtime_error(" Vulkan instance creation failed!");
+      throw std::runtime_error("vulkan instance creation failed!");
     }
   }
 
