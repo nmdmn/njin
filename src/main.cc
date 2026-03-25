@@ -87,10 +87,9 @@ private:
 
     bool all_found = true;
     std::ranges::for_each(glfw_required_extensions, [&](const auto &glfw_extension) {
-      // XXX something funny... extensions not found when its should be there?! DEBUG IT LATER!
-      logger.trace << glfw_extension;
-      bool found = std::ranges::any_of(
-          vk_extensions, [&](const auto &vk_extension) { return glfw_extension == vk_extension.extensionName; });
+      bool found = std::ranges::any_of(vk_extensions, [&](const auto &vk_extension) {
+        return std::string(glfw_extension) == std::string(vk_extension.extensionName);
+      });
       if (!found) {
         all_found = false;
         logger.warning << "missing extension: " << glfw_extension;
