@@ -194,7 +194,7 @@ private:
     if (is_validation_layer_) {
       create_info.enabledLayerCount = static_cast<uint32_t>(required_layers_.size());
       create_info.ppEnabledLayerNames = required_layers_.data();
-      VkDebugUtilsMessengerCreateInfoEXT debug_create_info;
+      VkDebugUtilsMessengerCreateInfoEXT debug_create_info{};
       populate_debug_messenger_create_info(debug_create_info);
       create_info.pNext = (VkDebugUtilsMessengerCreateInfoEXT *)&debug_create_info;
     } else {

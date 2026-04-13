@@ -6,7 +6,7 @@ function(setup_build_type)
         RelWithDebInfo
         CACHE STRING "Choose the type of build." FORCE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
-                                                 "MinSizeRel" "RelWithDebInfo")
+                                                "MinSizeRel" "RelWithDebInfo")
   endif()
   add_compile_options("$<$<CONFIG:DEBUG>:-DDEBUG>")
 endfunction()
