@@ -228,27 +228,17 @@ private:
 
   auto populate_debug_messenger_create_info(VkDebugUtilsMessengerCreateInfoEXT &create_info) -> void {
     create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    switch (NJIN_LOGGER) {
-    case (static_cast<int>(Logger::Level::TRACE)):
-      create_info.messageSeverity =
-          VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-          VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-      break;
-    case (static_cast<int>(Logger::Level::INFO)):
-      create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-                                    VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                                    VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-      break;
-    case (static_cast<int>(Logger::Level::WARNING)):
-      create_info.messageSeverity =
-          VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-      break;
-    case (static_cast<int>(Logger::Level::ERROR)):
-      create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-      break;
-    default:
-      throw std::runtime_error("NJIN_LOGGER is fucked up when setup debug messenger!");
-      break;
+    if (NJIN_LOGGER >= static_cast<int>(Logger::Level::ERROR)) {
+      create_info.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    }
+    if (NJIN_LOGGER >= static_cast<int>(Logger::Level::WARNING)) {
+      create_info.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+    }
+    if (NJIN_LOGGER >= static_cast<int>(Logger::Level::INFO)) {
+      create_info.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
+    }
+    if (NJIN_LOGGER >= static_cast<int>(Logger::Level::TRACE)) {
+      create_info.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
     }
     create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
                               VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |

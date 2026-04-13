@@ -21,7 +21,7 @@ namespace njin {
 
 class Logger {
 public:
-  enum class Level { TRACE = 1, INFO = 2, WARNING = 3, ERROR = 4 };
+  enum class Level { TRACE = 4, INFO = 3, WARNING = 2, ERROR = 1 };
 
   struct Null {
     template <typename T> Null &operator<<(const T &) { return *this; }
@@ -61,7 +61,7 @@ public:
 
   template <Level L> struct Proxy {
     template <typename T> auto operator<<(const T &msg) const {
-      if constexpr (static_cast<int>(L) >= NJIN_LOGGER) {
+      if constexpr (static_cast<int>(L) <= NJIN_LOGGER) {
         Stream stream(L, logger_);
         stream << msg;
         return stream;
