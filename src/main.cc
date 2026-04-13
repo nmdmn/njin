@@ -167,7 +167,7 @@ private:
     app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     app_info.pApplicationName = NJIN_NAME;
     app_info.applicationVersion = VK_MAKE_VERSION(NJIN_VERSION_MAJOR, NJIN_VERSION_MINOR, NJIN_VERSION_PATCH);
-    app_info.pEngineName = "No Engine";
+    app_info.pEngineName = NJIN_NAME;
     app_info.engineVersion = VK_MAKE_VERSION(NJIN_VERSION_MAJOR, NJIN_VERSION_MINOR, NJIN_VERSION_PATCH);
     app_info.apiVersion = VK_API_VERSION_1_0;
 
