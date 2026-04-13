@@ -269,7 +269,7 @@ private:
   std::vector<const char *> required_extensions_;
   const std::vector<const char *> required_layers_ = {"VK_LAYER_KHRONOS_validation"};
 
-// NOTE not optimal? validation layer disabled in RelWithDebInfo!
+// NOTE not optimal? validation layer enabled only in DEBUG!
 #if DEBUG && NJIN_LOGGER > 0
   static constexpr bool is_validation_layer_ = true;
 #else
