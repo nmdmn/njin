@@ -12,6 +12,7 @@
 
 #include "config.hh"
 
+// NOTE do I want this?
 #ifndef NJIN_LOGGER
 #define NJIN_LOGGER 3
 #endif

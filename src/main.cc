@@ -18,41 +18,151 @@ static auto &logger = njin::Logger::instance();
 namespace njin {
 class App {
 public:
-  void run() {
+  static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
+                                                       VkDebugUtilsMessageTypeFlagsEXT message_type,
+                                                       const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
+                                                       void *user_data) {
+    std::string log_prefix;
+    switch (message_type) {
+    case (VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT):
+      log_prefix = "GENERAL vulkan debug: ";
+      break;
+    case (VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT):
+      log_prefix = "VALIDATION vulkan debug: ";
+      break;
+    case (VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT):
+      log_prefix = "PERFORMANCE vulkan debug: ";
+      break;
+    default:
+      log_prefix = "not valid message type in validation layer debug callback: ";
+      break;
+    }
+
+    switch (message_severity) {
+    case (VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT):
+      logger.trace << log_prefix << callback_data->pMessage;
+      break;
+    case (VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT):
+      logger.info << log_prefix << callback_data->pMessage;
+      break;
+    case (VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT):
+      logger.warning << log_prefix << callback_data->pMessage;
+      break;
+    case (VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT):
+      logger.error << log_prefix << callback_data->pMessage;
+      break;
+    default:
+      logger.error << "not a valid message severity in validation layer debug callback!";
+      break;
+    }
+
+    return false;
+  }
+
+  auto run() -> void {
     logger.info << NJIN_NAME << " v" << NJIN_VERSION;
 
-    initWindow();
-    initVulkan();
-    mainLoop();
+    init_window();
+    init_vulkan();
+    main_loop();
     cleanup();
   }
 
 private:
-  void initWindow() {
+  auto init_window() -> void {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    window_ = glfwCreateWindow(WIDTH, HEIGHT, NJIN_NAME, nullptr, nullptr);
+    window_ = glfwCreateWindow(WIDTH_, HEIGHT_, NJIN_NAME, nullptr, nullptr);
   }
 
-  void initVulkan() {
-    createInstance();
-    // TODO ...
+  auto init_vulkan() -> void {
+    create_instance();
+    setup_debug_messenger();
   }
 
-  void mainLoop() {
+  auto main_loop() -> void {
     while (!glfwWindowShouldClose(window_)) {
       glfwPollEvents();
     }
   }
 
-  void cleanup() {
+  auto cleanup() -> void {
+    if (is_validation_layer_) {
+      destroy_debug_utils_messenger_EXT(instance_, debug_messenger_, nullptr);
+    }
     vkDestroyInstance(instance_, nullptr);
     glfwDestroyWindow(window_);
     glfwTerminate();
   }
 
-  void createInstance() {
+  auto check_extension_support() {
+    uint32_t vk_extension_count;
+    vkEnumerateInstanceExtensionProperties(nullptr, &vk_extension_count, nullptr);
+    std::vector<VkExtensionProperties> vk_extensions{vk_extension_count};
+    vkEnumerateInstanceExtensionProperties(nullptr, &vk_extension_count, vk_extensions.data());
+    logger.info << "available extensions:";
+    std::ranges::for_each(vk_extensions, [&](const auto &element) { logger.info << "\t" << element.extensionName; });
+
+    // NOTE needed on MacOS
+    required_extensions_.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+
+    if (is_validation_layer_) {
+      required_extensions_.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+
+    logger.info << "required extensions:";
+    bool all_found = true;
+    std::ranges::for_each(required_extensions_, [&](const auto &required_extension) {
+      logger.info << "\t" << required_extension;
+      bool found = std::ranges::any_of(vk_extensions, [&](const auto &available_extension) {
+        // NOTE is this ugly? strcomp? or extract this into a util function???
+        return std::string(required_extension) == std::string(available_extension.extensionName);
+      });
+      if (!found) {
+        all_found = false;
+        logger.warning << "missing extension: " << required_extension;
+      }
+    });
+
+    if (all_found) {
+      logger.info << "all extensions found";
+      return true;
+    }
+    return false;
+  }
+
+  auto check_layer_support() {
+    uint32_t vk_layer_count;
+    vkEnumerateInstanceLayerProperties(&vk_layer_count, nullptr);
+    std::vector<VkLayerProperties> vk_layers(vk_layer_count);
+    vkEnumerateInstanceLayerProperties(&vk_layer_count, vk_layers.data());
+
+    logger.info << "available layers:";
+    std::ranges::for_each(vk_layers, [&](const auto &element) { logger.info << "\t" << element.layerName; });
+
+    logger.info << "required extensions:";
+    bool all_found = true;
+    std::ranges::for_each(required_layers_, [&](const auto &required_layer) {
+      logger.info << "\t" << required_layer;
+      bool found = std::ranges::any_of(vk_layers, [&](const auto &available_layer) {
+        return std::string(required_layer) == std::string(available_layer.layerName);
+      });
+      if (!found) {
+        all_found = false;
+        logger.warning << "missing layer: " << required_layer;
+      }
+    });
+
+    if (all_found) {
+      logger.info << "all layer found";
+      return true;
+    }
+
+    return false;
+  }
+
+  auto create_instance() -> void {
     VkApplicationInfo app_info{};
     app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     app_info.pApplicationName = NJIN_NAME;
@@ -64,40 +174,32 @@ private:
     VkInstanceCreateInfo create_info{};
     create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     create_info.pApplicationInfo = &app_info;
-    create_info.enabledLayerCount = 0;
 
-    uint32_t glfw_extension_count = 0;
+    uint32_t glfw_extension_count;
     const char **glfw_extensions;
     glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
-    std::vector<const char *> glfw_required_extensions;
     std::ranges::transform(std::views::iota(static_cast<uint32_t>(0), glfw_extension_count),
-                           std::back_inserter(glfw_required_extensions), [&](int i) { return glfw_extensions[i]; });
-    glfw_required_extensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+                           std::back_inserter(required_extensions_), [&](int i) { return glfw_extensions[i]; });
 
+    if (!check_extension_support()) {
+      throw std::runtime_error("required extension(s) no supported!");
+    }
     create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-    create_info.enabledExtensionCount = static_cast<uint32_t>(glfw_required_extensions.size());
-    create_info.ppEnabledExtensionNames = glfw_required_extensions.data();
+    create_info.enabledExtensionCount = static_cast<uint32_t>(required_extensions_.size());
+    create_info.ppEnabledExtensionNames = required_extensions_.data();
 
-    uint32_t vk_extension_count = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &vk_extension_count, nullptr);
-    std::vector<VkExtensionProperties> vk_extensions{vk_extension_count};
-    vkEnumerateInstanceExtensionProperties(nullptr, &vk_extension_count, vk_extensions.data());
-    logger.info << "available extensions:";
-    std::ranges::for_each(vk_extensions, [&](const auto &element) { logger.info << "\t" << element.extensionName; });
-
-    bool all_found = true;
-    std::ranges::for_each(glfw_required_extensions, [&](const auto &glfw_extension) {
-      bool found = std::ranges::any_of(vk_extensions, [&](const auto &vk_extension) {
-        return std::string(glfw_extension) == std::string(vk_extension.extensionName);
-      });
-      if (!found) {
-        all_found = false;
-        logger.warning << "missing extension: " << glfw_extension;
-      }
-    });
-
-    if (all_found) {
-      logger.info << "all extensions found";
+    if (is_validation_layer_ && !check_layer_support()) {
+      throw std::runtime_error("required layer(s) no supported!");
+    }
+    if (is_validation_layer_) {
+      create_info.enabledLayerCount = static_cast<uint32_t>(required_layers_.size());
+      create_info.ppEnabledLayerNames = required_layers_.data();
+      VkDebugUtilsMessengerCreateInfoEXT debug_create_info;
+      populate_debug_messenger_create_info(debug_create_info);
+      create_info.pNext = (VkDebugUtilsMessengerCreateInfoEXT *)&debug_create_info;
+    } else {
+      create_info.enabledLayerCount = 0;
+      create_info.pNext = nullptr;
     }
 
     if (vkCreateInstance(&create_info, nullptr, &instance_) != VK_SUCCESS) {
@@ -105,15 +207,87 @@ private:
     }
   }
 
-  static constexpr uint32_t WIDTH = 800;
-  static constexpr uint32_t HEIGHT = 600;
+  VkResult create_debug_utils_messenger_EXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *create_info,
+                                            const VkAllocationCallbacks *allocator,
+                                            VkDebugUtilsMessengerEXT *debug_messenger) {
+    auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+    if (func != nullptr) {
+      return func(instance, create_info, allocator, debug_messenger);
+    } else {
+      return VK_ERROR_EXTENSION_NOT_PRESENT;
+    }
+  }
+
+  void destroy_debug_utils_messenger_EXT(VkInstance instance, VkDebugUtilsMessengerEXT debug_messenger,
+                                         const VkAllocationCallbacks *allocator) {
+    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+    if (func != nullptr) {
+      func(instance, debug_messenger, allocator);
+    }
+  }
+
+  auto populate_debug_messenger_create_info(VkDebugUtilsMessengerCreateInfoEXT &create_info) -> void {
+    create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    switch (NJIN_LOGGER) {
+    case (static_cast<int>(Logger::Level::TRACE)):
+      create_info.messageSeverity =
+          VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+          VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+      break;
+    case (static_cast<int>(Logger::Level::INFO)):
+      create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+                                    VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                                    VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+      break;
+    case (static_cast<int>(Logger::Level::WARNING)):
+      create_info.messageSeverity =
+          VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+      break;
+    case (static_cast<int>(Logger::Level::ERROR)):
+      create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+      break;
+    default:
+      throw std::runtime_error("NJIN_LOGGER is fucked up when setup debug messenger!");
+      break;
+    }
+    create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                              VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                              VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    create_info.pfnUserCallback = debug_callback;
+    create_info.pUserData = nullptr;
+  }
+
+  auto setup_debug_messenger() -> void {
+    if (!is_validation_layer_) {
+      return;
+    }
+
+    VkDebugUtilsMessengerCreateInfoEXT create_info{};
+    populate_debug_messenger_create_info(create_info);
+
+    if (create_debug_utils_messenger_EXT(instance_, &create_info, nullptr, &debug_messenger_) != VK_SUCCESS) {
+      throw std::runtime_error("failed to create debug messenger!");
+    }
+  }
+
+  static constexpr uint32_t WIDTH_ = 800;
+  static constexpr uint32_t HEIGHT_ = 600;
 
   GLFWwindow *window_;
   VkInstance instance_;
+  VkDebugUtilsMessengerEXT debug_messenger_;
+  std::vector<const char *> required_extensions_;
+  const std::vector<const char *> required_layers_ = {"VK_LAYER_KHRONOS_validation"};
+
+#if NJIN_LOGGER > 0
+  static constexpr bool is_validation_layer_ = true;
+#else
+  static constexpr bool is_validation_layer_ = false;
+#endif
 };
 } // namespace njin
 
-int main() {
+auto main() -> int {
   njin::App app;
 
   try {
