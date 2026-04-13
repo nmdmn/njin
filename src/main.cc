@@ -79,6 +79,7 @@ private:
   auto init_vulkan() -> void {
     create_instance();
     setup_debug_messenger();
+    select_physical_device();
   }
 
   auto main_loop() -> void {
@@ -97,7 +98,7 @@ private:
   }
 
   auto check_extension_support() {
-    uint32_t vk_extension_count;
+    uint32_t vk_extension_count = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &vk_extension_count, nullptr);
     std::vector<VkExtensionProperties> vk_extensions{vk_extension_count};
     vkEnumerateInstanceExtensionProperties(nullptr, &vk_extension_count, vk_extensions.data());
@@ -133,7 +134,7 @@ private:
   }
 
   auto check_layer_support() {
-    uint32_t vk_layer_count;
+    uint32_t vk_layer_count = 0;
     vkEnumerateInstanceLayerProperties(&vk_layer_count, nullptr);
     std::vector<VkLayerProperties> vk_layers(vk_layer_count);
     vkEnumerateInstanceLayerProperties(&vk_layer_count, vk_layers.data());
@@ -175,7 +176,7 @@ private:
     create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     create_info.pApplicationInfo = &app_info;
 
-    uint32_t glfw_extension_count;
+    uint32_t glfw_extension_count = 0;
     const char **glfw_extensions;
     glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
     std::ranges::transform(std::views::iota(static_cast<uint32_t>(0), glfw_extension_count),
@@ -258,6 +259,11 @@ private:
     if (create_debug_utils_messenger_EXT(instance_, &create_info, nullptr, &debug_messenger_) != VK_SUCCESS) {
       throw std::runtime_error("failed to create debug messenger!");
     }
+  }
+
+  auto select_physical_device() -> void {
+    // TODO
+    // ASDASD
   }
 
   static constexpr uint32_t WIDTH_ = 800;
