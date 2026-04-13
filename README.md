@@ -80,7 +80,7 @@ find /opt/homebrew -name "libVkLayer_khronos_validation.dylib" 2>/dev/null
 #### Generate cmake and build (the usual)
 
 ```sh
-mkdir build && cd build && cmake .. && make
+mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug .. && make -j8
 ```
 
 Run tests!
