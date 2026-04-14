@@ -261,9 +261,22 @@ private:
     }
   }
 
-  static auto is_device_suitable(VkPhysicalDevice device) {
-    // TODO find suitable GPU
-    return true;
+  static auto is_device_suitable(VkPhysicalDevice physical_device) {
+    VkPhysicalDeviceProperties physical_device_properties{};
+    vkGetPhysicalDeviceProperties(physical_device, &physical_device_properties);
+
+    VkPhysicalDeviceFeatures physical_device_features{};
+    vkGetPhysicalDeviceFeatures(physical_device, &physical_device_features);
+
+    logger.info << physical_device_properties.deviceName << ": API version = " << physical_device_properties.apiVersion
+                << ", DRIVER version = " << physical_device_properties.driverVersion;
+
+    // NOTE actually pick one based on really used property or feature, geometry shader not even used yet!
+    if (physical_device_features.tessellationShader) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   auto select_physical_device() -> void {
@@ -274,8 +287,8 @@ private:
     }
     std::vector<VkPhysicalDevice> physical_devices(device_count);
     vkEnumeratePhysicalDevices(instance_, &device_count, physical_devices.data());
+    // TODO implement a scoring logic based on avail memory, discrete, etc. and choose the most "useful" GPU
     auto suitable_device = std::ranges::find_if(physical_devices, is_device_suitable);
-
     if (suitable_device != physical_devices.end()) {
       physical_device_ = *suitable_device;
     } else {
