@@ -1,3 +1,4 @@
+# Setup build type if none defined
 function(setup_build_type)
   if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     message(
@@ -11,6 +12,7 @@ function(setup_build_type)
   add_compile_options("$<$<CONFIG:DEBUG>:-DDEBUG>")
 endfunction()
 
+# Cry if cmake started from the source directory
 function(prevent_in_src_builds)
   get_filename_component(srcdir "${CMAKE_SOURCE_DIR}" REALPATH)
   get_filename_component(bindir "${CMAKE_BINARY_DIR}" REALPATH)
@@ -24,6 +26,7 @@ function(prevent_in_src_builds)
   endif()
 endfunction()
 
+# Disable system includes
 function(no_system_includes)
   set(CMAKE_NO_SYSTEM_FROM_IMPORTED true)
 endfunction()

@@ -28,8 +28,9 @@ brew install vulkan-validationlayers
 
 #### Environment setup
 
-Do NOT add this to ".(z)profile"! Add to ".zshrc, .bashrc" so neovim's embedded terminal will see these.
-".(z)profile" meant for login shells (opening a fresh terminal app, SSH in, etc)
+Do NOT add this to ".(z)profile"! Add to ".zshrc, .bashrc" so neovim's
+embedded terminal will see these. ".(z)profile" meant for login shells
+(opening a fresh terminal app, SSH in, etc)
 
 ```sh
 export VK_LAYER_PATH=/opt/homebrew/opt/vulkan-validationlayers/share/vulkan/explicit_layer.d

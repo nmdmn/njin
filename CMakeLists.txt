@@ -34,14 +34,14 @@ else()
 endif()
 configure_file(src/config.hh.in src/config.hh)
 
-# ── Dependencies ──────────────────────────────────────────────────────────────
+# ── Dependencies ─────────────────────────────────────────────────────────────
 find_package(Vulkan REQUIRED)
 
 include(FetchContent)
 set(FETCHCONTENT_QUIET OFF)
 
 # GLFW — window + input + Vulkan surface
-FetchContent_Declare(glfw
+fetchcontent_declare(glfw
   GIT_REPOSITORY https://github.com/glfw/glfw.git
   GIT_TAG        3.4
   GIT_SHALLOW    TRUE
@@ -51,28 +51,29 @@ set(GLFW_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 # GLM — math (header only)
-FetchContent_Declare(glm
+fetchcontent_declare(glm
   GIT_REPOSITORY https://github.com/g-truc/glm.git
   GIT_TAG        1.0.1
   GIT_SHALLOW    TRUE
 )
 
 # VMA — Vulkan Memory Allocator (header only)
-FetchContent_Declare(vma
-  GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+fetchcontent_declare(vma
+  GIT_REPOSITORY
+    https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
   GIT_TAG        v3.1.0
   GIT_SHALLOW    TRUE
 )
 
-FetchContent_MakeAvailable(glfw glm vma)
+fetchcontent_makeavailable(glfw glm vma)
 
 # Catch2 — testing framework
-FetchContent_Declare(catch2
+fetchcontent_declare(catch2
   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
   GIT_TAG        v3.7.1
   GIT_SHALLOW    TRUE
 )
-FetchContent_MakeAvailable(catch2)
+fetchcontent_makeavailable(catch2)
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 enable_testing()
@@ -147,8 +148,8 @@ file(GLOB SHADERS
   ${SHADER_DIR}/*.comp
 )
 
-foreach(SHADER ${SHADERS})
-  get_filename_component(SHADER_NAME ${SHADER} NAME)
+foreach(shader ${SHADERS})
+  get_filename_component(SHADER_NAME ${shader} NAME)
   set(SPV_OUT ${SPV_DIR}/${SHADER_NAME}.spv)
 
   add_custom_command(
@@ -160,15 +161,19 @@ foreach(SHADER ${SHADERS})
   list(APPEND SPV_FILES ${SPV_OUT})
 endforeach()
 
-add_custom_target(shaders ALL DEPENDS ${SPV_FILES})
+add_custom_target(shaders ALL DEPENDS ${SPV_FILES} COMMENT "Building shaders")
 add_dependencies(njin shaders njin_tests)
 
 # Copy SPIR-V files next to binary after build
 add_custom_command(TARGET njin POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_directory ${SPV_DIR} $<TARGET_FILE_DIR:njin>/shaders
+  COMMAND
+    ${CMAKE_COMMAND} -E copy_directory
+    ${SPV_DIR} $<TARGET_FILE_DIR:njin>/shaders
+  COMMENT "Copy shaders"
 )
 
 add_custom_command(TARGET njin POST_BUILD
     COMMAND ctest --output-on-failure --test-dir ${CMAKE_BINARY_DIR}
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Run tests"
 )
