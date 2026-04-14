@@ -227,7 +227,7 @@ private:
     }
   }
 
-  auto populate_debug_messenger_create_info(VkDebugUtilsMessengerCreateInfoEXT &create_info) -> void {
+  static auto populate_debug_messenger_create_info(VkDebugUtilsMessengerCreateInfoEXT &create_info) -> void {
     create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     if (NJIN_LOGGER >= static_cast<int>(Logger::Level::ERROR)) {
       create_info.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
@@ -261,9 +261,26 @@ private:
     }
   }
 
+  static auto is_device_suitable(VkPhysicalDevice device) {
+    // TODO find suitable GPU
+    return true;
+  }
+
   auto select_physical_device() -> void {
-    // TODO
-    // ASDASD
+    uint32_t device_count = 0;
+    vkEnumeratePhysicalDevices(instance_, &device_count, nullptr);
+    if (0 == device_count) {
+      throw std::runtime_error("no GPU found with vulkan support!");
+    }
+    std::vector<VkPhysicalDevice> physical_devices(device_count);
+    vkEnumeratePhysicalDevices(instance_, &device_count, physical_devices.data());
+    auto suitable_device = std::ranges::find_if(physical_devices, is_device_suitable);
+
+    if (suitable_device != physical_devices.end()) {
+      physical_device_ = *suitable_device;
+    } else {
+      throw std::runtime_error("failed to find suitable GPU!");
+    }
   }
 
   static constexpr uint32_t WIDTH_ = 800;
@@ -271,6 +288,7 @@ private:
 
   GLFWwindow *window_;
   VkInstance instance_;
+  VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
   VkDebugUtilsMessengerEXT debug_messenger_;
   std::vector<const char *> required_extensions_;
   const std::vector<const char *> required_layers_ = {"VK_LAYER_KHRONOS_validation"};
