@@ -261,6 +261,28 @@ private:
     }
   }
 
+  struct Queue_family_iterators {
+    std::optional<std::vector<VkQueueFamilyProperties>::iterator> graphics_family;
+
+    auto is_complete() const { return graphics_family.has_value(); }
+  };
+
+  static auto find_queue_families(VkPhysicalDevice physical_device) {
+    uint32_t queue_family_count = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, nullptr);
+    std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_family_properties.data());
+
+    const auto graphics_family = std::ranges::find_if(
+        queue_family_properties, [&](const auto &property) { return property.queueFlags & VK_QUEUE_GRAPHICS_BIT; });
+
+    Queue_family_iterators family_iterators;
+    if (graphics_family != queue_family_properties.end()) {
+      family_iterators.graphics_family = graphics_family;
+    }
+    return family_iterators;
+  }
+
   static auto is_device_suitable(VkPhysicalDevice physical_device) {
     VkPhysicalDeviceProperties physical_device_properties{};
     vkGetPhysicalDeviceProperties(physical_device, &physical_device_properties);
@@ -268,11 +290,12 @@ private:
     VkPhysicalDeviceFeatures physical_device_features{};
     vkGetPhysicalDeviceFeatures(physical_device, &physical_device_features);
 
-    logger.info << physical_device_properties.deviceName << ": API version = " << physical_device_properties.apiVersion
-                << ", DRIVER version = " << physical_device_properties.driverVersion;
+    logger.info << "GPU: " << physical_device_properties.deviceName
+                << ", API version: " << physical_device_properties.apiVersion
+                << ", driver version: " << physical_device_properties.driverVersion;
 
-    // NOTE actually pick one based on really used property or feature, geometry shader not even used yet!
-    return static_cast<bool>(physical_device_features.tessellationShader);
+    const auto family_iterators = find_queue_families(physical_device);
+    return family_iterators.is_complete() && static_cast<bool>(physical_device_features.tessellationShader);
   }
 
   auto select_physical_device() -> void {
