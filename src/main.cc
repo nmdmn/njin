@@ -272,11 +272,7 @@ private:
                 << ", DRIVER version = " << physical_device_properties.driverVersion;
 
     // NOTE actually pick one based on really used property or feature, geometry shader not even used yet!
-    if (physical_device_features.tessellationShader) {
-      return true;
-    } else {
-      return false;
-    }
+    return static_cast<bool>(physical_device_features.tessellationShader);
   }
 
   auto select_physical_device() -> void {
