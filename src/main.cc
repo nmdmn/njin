@@ -80,6 +80,7 @@ private:
     create_instance();
     setup_debug_messenger();
     select_physical_device();
+    create_logical_device();
   }
 
   auto main_loop() -> void {
@@ -261,8 +262,8 @@ private:
     }
   }
 
-  struct Queue_family_iterators {
-    std::optional<std::vector<VkQueueFamilyProperties>::iterator> graphics_family;
+  struct Queue_family_indices {
+    std::optional<uint32_t> graphics_family;
 
     auto is_complete() const { return graphics_family.has_value(); }
   };
@@ -276,11 +277,11 @@ private:
     const auto graphics_family = std::ranges::find_if(
         queue_family_properties, [&](const auto &property) { return property.queueFlags & VK_QUEUE_GRAPHICS_BIT; });
 
-    Queue_family_iterators family_iterators;
+    Queue_family_indices family_indices;
     if (graphics_family != queue_family_properties.end()) {
-      family_iterators.graphics_family = graphics_family;
+      family_indices.graphics_family = std::distance(queue_family_properties.begin(), graphics_family);
     }
-    return family_iterators;
+    return family_indices;
   }
 
   static auto is_device_suitable(VkPhysicalDevice physical_device) {
@@ -294,8 +295,8 @@ private:
                 << ", API version: " << physical_device_properties.apiVersion
                 << ", driver version: " << physical_device_properties.driverVersion;
 
-    const auto family_iterators = find_queue_families(physical_device);
-    return family_iterators.is_complete() && static_cast<bool>(physical_device_features.tessellationShader);
+    const auto family_indices = find_queue_families(physical_device);
+    return family_indices.is_complete();
   }
 
   auto select_physical_device() -> void {
@@ -313,6 +314,11 @@ private:
     } else {
       throw std::runtime_error("failed to find suitable GPU!");
     }
+  }
+
+  auto create_logical_device() -> void {
+    // TODO
+    // ASD
   }
 
   static constexpr uint32_t WIDTH_ = 800;
