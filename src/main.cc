@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include <vector>
 #include <ranges>
 #include <algorithm>
@@ -90,6 +91,7 @@ private:
   }
 
   auto cleanup() -> void {
+    vkDestroyDevice(logical_device_, nullptr);
     if (is_validation_layer_) {
       destroy_debug_utils_messenger_EXT(instance_, debug_messenger_, nullptr);
     }
@@ -317,8 +319,34 @@ private:
   }
 
   auto create_logical_device() -> void {
-    // TODO
-    // ASD
+    Queue_family_indices family_indices = find_queue_families(physical_device_);
+    VkDeviceQueueCreateInfo queue_create_info{};
+    queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queue_create_info.queueFamilyIndex = family_indices.graphics_family.value();
+    queue_create_info.queueCount = 1;
+    float queue_priority = 1.f;
+    queue_create_info.pQueuePriorities = &queue_priority;
+
+    // TODO nothing fancy, yet! everything is VK_FALSE
+    VkPhysicalDeviceFeatures device_features{};
+
+    VkDeviceCreateInfo create_info{};
+    create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    create_info.pQueueCreateInfos = &queue_create_info;
+    create_info.queueCreateInfoCount = 1;
+    create_info.pEnabledFeatures = &device_features;
+    create_info.enabledExtensionCount = 0;
+
+    if (is_validation_layer_) {
+      create_info.enabledLayerCount = static_cast<uint32_t>(required_layers_.size());
+      create_info.ppEnabledLayerNames = required_layers_.data();
+    } else {
+      create_info.enabledLayerCount = 0;
+    }
+
+    if (vkCreateDevice(physical_device_, &create_info, nullptr, &logical_device_) != VK_SUCCESS) {
+      throw std::runtime_error("logical device creation failed!");
+    }
   }
 
   static constexpr uint32_t WIDTH_ = 800;
@@ -327,6 +355,7 @@ private:
   GLFWwindow *window_;
   VkInstance instance_;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
+  VkDevice logical_device_;
   VkDebugUtilsMessengerEXT debug_messenger_;
   std::vector<const char *> required_extensions_;
   const std::vector<const char *> required_layers_ = {"VK_LAYER_KHRONOS_validation"};
