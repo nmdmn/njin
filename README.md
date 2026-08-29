@@ -15,8 +15,7 @@ Quick platform agnostic vulkan renderer using GLFW3, GLM, VMA.
 
 ## Installation
 
-Not sure what is needed on the other platforms yet, what is specific for
-Linux or Windows
+Not sure what is needed on the other platforms yet, what is specific for Linux or Windows
 
 ### macOS
 
