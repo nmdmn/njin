@@ -336,13 +336,7 @@ private:
     create_info.queueCreateInfoCount = 1;
     create_info.pEnabledFeatures = &device_features;
     create_info.enabledExtensionCount = 0;
-
-    if (is_validation_layer_) {
-      create_info.enabledLayerCount = static_cast<uint32_t>(required_layers_.size());
-      create_info.ppEnabledLayerNames = required_layers_.data();
-    } else {
-      create_info.enabledLayerCount = 0;
-    }
+    create_info.enabledLayerCount = 0;
 
     if (vkCreateDevice(physical_device_, &create_info, nullptr, &logical_device_) != VK_SUCCESS) {
       throw std::runtime_error("logical device creation failed!");
