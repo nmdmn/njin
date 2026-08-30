@@ -319,6 +319,7 @@ private:
   }
 
   auto create_logical_device() -> void {
+    // XXX khr portability subset reported by the device so must enable it, check debug layer validation err.
     Queue_family_indices family_indices = find_queue_families(physical_device_);
     VkDeviceQueueCreateInfo queue_create_info{};
     queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
